@@ -1,39 +1,49 @@
-import React, { useState, useEffect } from 'react'
+import React from 'react'
 import Card from '../card/Card'
 import styles from './home.module.css'
-import axios from 'axios'
 
-let URL = "https://rickandmortyapi.com/api"
+/// esta importacion hace que haga la coneccion con redux.
+import { connect } from 'react-redux';
+import { removeCharacterAction, addToFavoritesAAction } from '../../redux/charsDuck';
 
-export default function Home() {
+// una vez que se declaare en el conect la accion o store se pasa por props en el 
+// componente para  utilizarlo en el html
+ function Home({chars, addToFavoritesAAction, removeCharacterAction}) {
+   // console.log(chars);
+    
+    // let [chars, setChars] = useState([])
 
-    let [chars, setChars] = useState([])
+    // useEffect(() => {
+    //     getCharacters()
+    // }, [])
 
-    useEffect(() => {
-        getCharacters()
-    }, [])
-
-    function nextChar() {
-        chars.shift()
-        if (!chars.length) {
-            //get more characters
-        }
-        setChars([...chars])
-    }
+    // function nextChar() {
+    //     chars.shift()
+    //     if (!chars.length) {
+    //         //get more characters
+    //     }
+    //     setChars([...chars])
+    // }
 
     function renderCharacter() {
         let char = chars[0]
         return (
-            <Card leftClick={nextChar} {...char} />
+            <Card 
+            rightClick={addToFavoritesAAction}
+            leftClick={nextCharacter}  {...char} />
         )
     }
 
-    function getCharacters() {
-        return axios.get(`${URL}/character`)
-            .then(res => {
-                setChars(res.data.results)
-            })
+    function nextCharacter() {
+        removeCharacterAction()
     }
+
+    // function getCharacters() {
+    //     return axios.get(`${URL}/character`)
+    //         .then(res => {
+    //             setChars(res.data.results)
+    //         })
+    // }
 
     return (
         <div className={styles.container}>
@@ -44,3 +54,17 @@ export default function Home() {
         </div>
     )
 }
+
+//  esta funcion es un mapeo que permite obtener el store, o state de redux.
+function mapState(state) {
+    return { 
+        // primero se declare variable y  el tipo que va a tener en este caso proviene de redux del state
+        // en este caso se obtiene un arreglo  de los personajes.
+        chars: state.characters.array
+    }
+}
+ 
+
+/// con el conect se realiza la conexion hacia redux.
+/// dentro de la funcion connect puede ir el reducer aguna accion (STORE), o bien un dispatch
+export default connect(mapState, {addToFavoritesAAction, removeCharacterAction })(Home)

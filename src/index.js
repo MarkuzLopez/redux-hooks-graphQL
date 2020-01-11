@@ -5,10 +5,17 @@ import App from './App';
 import * as serviceWorker from './serviceWorker';
 import { BrowserRouter } from 'react-router-dom'
 import 'font-awesome/css/font-awesome.css'
+//* importacion de  Provider que no es redux, si no un complemento.
+import { Provider } from 'react-redux';
+import generateStore from './redux/store';
+
+// vaariable para pasar el generateStore
+let store = generateStore();
 
 let WithRouter = () => <BrowserRouter><App /></BrowserRouter>
+let WithStore = () => <Provider store={store}> <WithRouter /></Provider>
 
-ReactDOM.render(<WithRouter />, document.getElementById('root'));
+ReactDOM.render(<WithStore />, document.getElementById('root'));
 
 // If you want your app to work offline and load faster, you can change
 // unregister() to register() below. Note this comes with some pitfalls.
