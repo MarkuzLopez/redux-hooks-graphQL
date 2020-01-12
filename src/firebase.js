@@ -16,15 +16,12 @@ let firebaseConfig = {
 
 let db = firebase.firestore().collection('favs');
 
-export function getFavs(uid) { 
-  console.log(uid);
-   db.doc(uid).get().then( snap => { 
-     console.log('probando get', snap.data());
-      return snap.data().favorites
-   })
-  // db.doc(uid).onSnapshot( (snap) => {
-  //   return snap.data().array;
-  // })
+export function getFavs(uid) {
+  return db.doc(uid).get()
+          .then( snap => {
+            console.log('users duck', snap.data())
+            return snap.data().favorites
+          })
 }
 
 export function updateDB(array, uid) { 

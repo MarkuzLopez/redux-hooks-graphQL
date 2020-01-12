@@ -1,6 +1,6 @@
 import {createStore, combineReducers, compose, applyMiddleware } from 'redux';
 import userReducer, {restoreSessionAction} from './userDuck';
-import charsReducer, {getCharacterActions} from './charsDuck';
+import charsReducer, {getCharacterActions, restoreFavorites} from './charsDuck';
 import  thunk from 'redux-thunk';
 
 //* aqui contendra todos los reducers.
@@ -18,5 +18,7 @@ export default function generateStore(){
     /// ejecutar la accion de characters, es una funcion doble, y consigo los personajes por primer vez 
     getCharacterActions()(store.dispatch, store.getState)
     restoreSessionAction()(store.dispatch)
+    restoreFavorites()(store.dispatch)
+
     return store;
 }

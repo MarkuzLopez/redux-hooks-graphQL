@@ -19,7 +19,7 @@ let REMOVE_CHARACTER = "REMOVE_CHARACTER";
 let ADD_TO_FAVORITES = "ADD_TO_FAVORITES";
 
 
-let GET_FAVS_ = "GET_FAVS_";
+let GET_FAVS = "GET_FAVS";
 let GET_FAVS_SUCESS = "GET_FAVS_SUCESS";
 let GET_FAVS_ERROR = "GET_FAVS_ERROR";
 
@@ -47,39 +47,64 @@ export default function reducer(state = initialData, action) {
             return { ...state, ...action.payload }
         // eslint-disable-next-line no-fallthrough
 
-        case GET_FAVS_: 
-            return { ...state, fetching: true}
+        // seccion de getFavorites 
         case GET_FAVS_SUCESS: 
-            return {...state, fetching: false, favorites: action.payload}
+            return { ...state, fetching: false, favorites: action.payload }
+
         case GET_FAVS_ERROR: 
-            return {...state, fetching: false, error: action.payload}
+            return { ...state, fetching: false, error: action.payload }
+        
+        case GET_FAVS: 
+            return {...state, fetching: true}
+        
         default:
             return state
+    }
+}
+
+// guardar los favorites en el local storage 
+function saveStorageFavorites(storage){
+    localStorage.storage = JSON.stringify(storage)
+}
+
+
+export let restoreFavorites = () => dispatch =>  { 
+    let storage = localStorage.getItem('favorites');
+    storage = JSON.parse(storage)
+
+    if(storage && storage.favorites) {
+        dispatch({ 
+            type: GET_FAVS_SUCESS,
+            payload: storage.favorites
+        })
     }
 }
 
 // actions (thunks)
 
 // recuperar favoritos 
-export let retreiveFavs = () => (dispatch, getState) => { 
-    dispatch({ 
-        type: GET_FAVS_
+export let retreiveFavs = () => (dispatch, getState) => { 
+    dispatch({
+        type: GET_FAVS
     })
     let { uid } = getState().user
+    console.log(uid);
     return getFavs(uid)
-    .then( array  => { 
-        console.log('array', array);
-       dispatch({
-        type: GET_FAVS_SUCESS,
-        payload: [...array]
-       })
-    }).catch( err => { 
-        console.log(err);
-        dispatch({ 
-            type: GET_FAVS_ERROR,
-            payload: err.message
-        })
-    })
+            .then(favorites => { 
+                console.log('favorites', favorites);
+                dispatch({
+                    type: GET_FAVS_SUCESS,
+                    payload: [...favorites]
+                })
+                saveStorageFavorites(getState())
+            }).catch( err => { 
+                console.error(err);
+                dispatch({
+                    type: GET_FAVS_ERROR,
+                    payload: err.message
+                })
+            })
+    
 }
 
 
