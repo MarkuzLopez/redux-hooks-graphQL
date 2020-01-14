@@ -1,14 +1,22 @@
 import axios from 'axios';
 import { updateDB, getFavs } from '../firebase';
+
+import ApolloCliente, { gql } from 'apollo-boost';
 //constantes
 let initialData = {
     fetching: false,
     array: [],
     current: {},
-    favorites: []
+    favorites: [],
+    nextPaage: 1
 }
 // URL API
 let URL = "http://rickandmortyapi.com/api/character";
+
+// iniziliciando al cliente
+let client = new ApolloCliente({
+    uri: "http://rickandmortyapi.com/graphql"
+})
 
 // aciones que se estan solicitando 
 let GET_CHARACTERS = "GET_CHARACTERS";
@@ -23,6 +31,7 @@ let GET_FAVS = "GET_FAVS";
 let GET_FAVS_SUCESS = "GET_FAVS_SUCESS";
 let GET_FAVS_ERROR = "GET_FAVS_ERROR";
 
+let UPDATE_PAGE = "UPDATE_PAGE";
 
 // reducer para cambiar los estados 
 export default function reducer(state = initialData, action) {
@@ -56,6 +65,9 @@ export default function reducer(state = initialData, action) {
         
         case GET_FAVS: 
             return {...state, fetching: true}
+
+        case UPDATE_PAGE: 
+             return{...state, nextPaage: action.payload }
         
         default:
             return state
@@ -136,6 +148,9 @@ export let removeCharacterAction = () => (dispatch, getState) => {
 
     // el shift() es para remover un index
     array.shift();
+    if(array.length) {
+        getCharacterActions()(dispatch, getState)
+    }
     dispatch({
         type: REMOVE_CHARACTER,
         // devolvemos el arreglo pero ya sin el indice del arreglo que se removio
@@ -145,23 +160,82 @@ export let removeCharacterAction = () => (dispatch, getState) => {
     })
 }
 // una funcion que devuelve una funcion :/ :D 
-export const getCharacterActions = () => (dispatch, getState) => { 
+export const getCharacterActions = () => (dispatch, getState) => {
+
+    // let query = gql`
+    // {
+    //     characters{ 
+    //         results{
+    //           name
+    //           image
+    //         }
+    //     }
+    // }
+    // `
+    let query = gql`
+    query ($page: Int) { 
+	characters(page: $page){ 
+        info { 
+            pages
+            next
+            prev
+        }
+        results{
+            name
+            image
+        }
+      }
+    }`
+
+    //* utilizando grapqhl
     dispatch({
         type: GET_CHARACTERS
     })
-    return axios.get(URL)
-           .then( res => {               
-               dispatch({ 
-                   // laa aaccion del reducer 
-                   type: GET_CHARACTERS_SUCCESS,
-                   // la respuesta de la API
-                   payload: res.data.results
-               })
-           }).catch( err => {
-               console.log(err);
-               dispatch({
-                   type: GET_CHARACTERS_ERROR,
-                   payload: err.response.message
-               })
-           })
+
+    // variable para cambiar de pagina 
+    let { nextPaage } = getState().characters;
+
+    return client.query({
+        query,
+        variables: {page: nextPaage}
+    })
+        .then(({ data, error }) => {
+            console.log(data);
+            if (error) {
+                dispatch({
+                    type: GET_CHARACTERS_ERROR,
+                    payload: error
+                })
+                return;
+            }
+            dispatch({
+                type: GET_CHARACTERS_SUCCESS,
+                payload: data.characters.results
+            })
+            // sipatch psara cambiar de pagina 
+            dispatch({ 
+                type: UPDATE_PAGE,
+                // si tiene la informaacion la motraara y camabiara si esta nulo lo regresa a uno e nextPage
+                payload: data.characters.info.next ? data.characters.info.next : 1
+            })
+        })
+
+    // dispatch({
+    //     type: GET_CHARACTERS
+    // })
+    // return axios.get(URL)
+    //        .then( res => {               
+    //            dispatch({ 
+    //                // laa aaccion del reducer 
+    //                type: GET_CHARACTERS_SUCCESS,
+    //                // la respuesta de la API
+    //                payload: res.data.results
+    //            })
+    //        }).catch( err => {
+    //            console.log(err);
+    //            dispatch({
+    //                type: GET_CHARACTERS_ERROR,
+    //                payload: err.response.message
+    //            })
+    //        })
 }
